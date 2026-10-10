@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador NBU - Nomenclador Bioquímico Único Argentina (CUBRA)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035485',
+                            900: '#0c2e4e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        .badge-asterisk {
+            background: linear-gradient(135deg, #fef2f2 0%, #ffe4e4 100%);
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        .badge-normative {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 dark:text-slate-100 dark:bg-slate-900 flex flex-col">
+
+    <!-- Header principal -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md font-bold text-xl tracking-wider">
+                        NBU
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                            Nomenclador Bioquímico Único
+                        </h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                            CUBRA / PMO & Normativas Técnicas (Argentina)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Actions / Controls -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Google Drive Import Shortcut -->
+                    <button onclick="openDriveModal()" class="px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12.01 1.485c-1.782 0-3.327.94-4.223 2.388L1.442 14.611A4.975 4.975 0 001 17c0 2.761 2.239 5 5 5h12c2.761 0 5-2.239 5-5 0-.877-.226-1.701-.621-2.422L16.23 3.873a4.982 4.982 0 00-4.22-2.388zM8.5 7.5h7l3.5 6h-14z"/>
+                        </svg>
+                        <span class="hidden md:inline">Google Drive</span>
+                    </button>
+
+                    <!-- Cotizador / Presupuesto UB Toggle -->
+                    <button id="btnToggleCart" onclick="toggleCartDrawer()" class="relative p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-2 text-sm font-medium">
+                        <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="hidden md:inline">Calculadora UB</span>
+                        <span id="cartCountBadge" class="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                    </button>
+
+                    <!-- Importar Archivos -->
+                    <button onclick="openImportModal()" class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-600 dark:text-slate-300 text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        <span class="hidden lg:inline">Cargar Datos</span>
+                    </button>
+
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                        <svg id="themeIconSun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Google Drive Sync Banner -->
+    <div id="driveNoticeBanner" class="bg-brand-900 text-white px-4 py-2.5 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-2 shadow-inner">
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold bg-brand-700 text-brand-100 text-xs">Google Drive CUBRA</span>
+            <span class="truncate">Archivo configurado: <code class="bg-brand-950 px-1.5 py-0.5 rounded text-amber-300">1eVvNiOisNS22H4JkP9Jx-mAvL0G5tfea</code></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openDriveModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-md font-semibold text-xs transition">
+                Sincronizar Archivo
+            </button>
+            <button onclick="document.getElementById('driveNoticeBanner').remove()" class="text-slate-300 hover:text-white p-1">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Sección de Búsqueda y Filtros -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 transition">
+            <form id="searchForm" onsubmit="handleSearchSubmit(event)" class="space-y-4">
+                
+                <!-- Input de búsqueda principal -->
+                <div class="relative flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="searchInput" 
+                            placeholder="Buscar por Determinación, Abreviatura (ej: HEM, GLU), Sinónimo o Código (ej: 660101)..." 
+                            class="w-full pl-11 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white placeholder-slate-400 text-sm sm:text-base outline-none transition"
+                            autocomplete="off">
+                        <button type="button" id="btnClearSearch" onclick="clearSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 hidden">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Botón Buscar -->
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition duration-150 flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span>BUSCAR</span>
+                    </button>
+                </div>
+
+                <!-- Filtros Avanzados -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs sm:text-sm border-t border-slate-100 dark:border-slate-700/60">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-slate-500 font-medium mr-1">Filtrar por:</span>
+                        
+                        <button type="button" id="filterPMO" onclick="toggleFilter('pmo')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400" id="indicatorPMO"></span>
+                            Inscrito PMO
+                        </button>
+
+                        <button type="button" id="filterEspeciales" onclick="toggleFilter('especial')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400" id="indicatorEspecial"></span>
+                            Prácticas Especiales
+                        </button>
+
+                        <button type="button" id="filterNormativa" onclick="toggleFilter('normativa')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400" id="indicatorNormativa"></span>
+                            Con Normativa (N)
+                        </button>
+
+                        <select id="filterState" onchange="applyFilters()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 outline-none">
+                            <option value="all">Todos los Estados</option>
+                            <option value="active">Solo Vigentes</option>
+                            <option value="deprecated">En Desuso (* Asterisco)</option>
+                        </select>
+                    </div>
+
+                    <label class="inline-flex items-center cursor-pointer select-none text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                        <input type="checkbox" id="liveSearchToggle" class="sr-only peer" onchange="handleLiveToggle()">
+                        <div class="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-600 relative"></div>
+                        <span class="ml-2 text-xs font-medium">Búsqueda al escribir</span>
+                    </label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Resumen de Resultados y Leyenda -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div id="resultsCount" class="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                Cargando datos del Nomenclador Bioquímico Único...
+            </div>
+            <div class="flex items-center space-x-3 text-xs">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    N = Norma mínima / Interpretación
+                </span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800">
+                    * = En desuso
+                </span>
+            </div>
+        </div>
+
+        <!-- Tabla Principal de Resultados NBU (Basada en la nota manuscrita) -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider text-xs border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th scope="col" class="py-4 px-4 sm:px-6">Código</th>
+                            <th scope="col" class="py-4 px-4 sm:px-6">Determinación / Abreviatura / Sinónimos</th>
+                            <th scope="col" class="py-4 px-3 text-center">Urgencia</th>
+                            <th scope="col" class="py-4 px-3 text-center">Referencia</th>
+                            <th scope="col" class="py-4 px-4 text-right">UB</th>
+                            <th scope="col" class="py-4 px-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody" class="divide-y divide-slate-200 dark:divide-slate-700/80">
+                        <!-- Generado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="hidden py-12 px-4 text-center">
+                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-base font-semibold text-slate-900 dark:text-white">No se encontraron determinaciones</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Prueba buscar con otro término, abreviatura o restablece los filtros.</p>
+                <button onclick="resetAllFilters()" class="mt-4 px-4 py-2 bg-brand-600 text-white text-xs font-semibold rounded-lg hover:bg-brand-700 transition">
+                    Restablecer Filtros
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE DETALLE DE PRÁCTICA & NORMATIVA (N) -->
+    <div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-5 transform transition-transform scale-95 duration-200" id="modalContainer">
+            
+            <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="modalCode" class="text-sm font-mono font-bold px-2.5 py-1 bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 rounded-md"></span>
+                        <span id="modalBadges" class="flex gap-1"></span>
+                    </div>
+                    <h2 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white mt-1"></h2>
+                </div>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Datos Técnicos -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                    <span class="block text-xs text-slate-400 font-medium uppercase">Abreviatura</span>
+                    <span id="modalAbbreviation" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                    <span class="block text-xs text-slate-400 font-medium uppercase">Unidades (UB)</span>
+                    <span id="modalUB" class="font-semibold text-brand-600 dark:text-brand-400 text-base"></span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                    <span class="block text-xs text-slate-400 font-medium uppercase">Urgencia</span>
+                    <span id="modalUrgencia" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                    <span class="block text-xs text-slate-400 font-medium uppercase">Inclusión PMO</span>
+                    <span id="modalPMO" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+            </div>
+
+            <!-- Sinónimos -->
+            <div class="space-y-1">
+                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sinónimos & Nombres Alternativos</h4>
+                <div id="modalSynonyms" class="flex flex-wrap gap-1.5 text-xs text-slate-700 dark:text-slate-300"></div>
+            </div>
+
+            <!-- Sección Normativa Técnica (N) -->
+            <div id="modalNormativeBox" class="p-4 rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/30 dark:border-blue-900 space-y-2">
+                <div class="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-semibold text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Norma Mínima & Interpretación (N)</span>
+                </div>
+                <p id="modalNormativeText" class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"></p>
+            </div>
+
+            <!-- Alerta si está en desuso (*) -->
+            <div id="modalDesusoBox" class="p-4 rounded-xl border border-red-200 bg-red-50/60 dark:bg-red-950/30 dark:border-red-900 flex items-start gap-3 hidden">
+                <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div class="text-xs sm:text-sm text-red-800 dark:text-red-300">
+                    <strong>Práctica catalogada con Asterisco (*):</strong> Esta determinación se encuentra en desuso o ha sido reemplazada por metodologías automatizadas en la actualización vigente del NBU.
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeDetailModal()" class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-100 font-medium text-sm rounded-xl transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GOOGLE DRIVE LOADER -->
+    <div id="driveModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 dark:border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.01 1.485c-1.782 0-3.327.94-4.223 2.388L1.442 14.611A4.975 4.975 0 001 17c0 2.761 2.239 5 5 5h12c2.761 0 5-2.239 5-5 0-.877-.226-1.701-.621-2.422L16.23 3.873a4.982 4.982 0 00-4.22-2.388zM8.5 7.5h7l3.5 6h-14z"/>
+                    </svg>
+                    Importar desde Google Drive
+                </h3>
+                <button onclick="closeDriveModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">&times;</button>
+            </div>
+
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Ingresa el enlace público de Google Drive o el ID del archivo de NBU/CUBRA.
+            </p>
+
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">URL de Google Drive o ID del archivo:</label>
+                <input type="text" id="driveUrlInput" value="https://drive.google.com/file/d/1eVvNiOisNS22H4JkP9Jx-mAvL0G5tfea/view?usp=drive_link" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+                💡 <strong>Nota:</strong> Si el archivo no es directamente accesible por restricciones CORS de Google Drive, puedes descargarlo localmente y cargarlo en la opción "Cargar Datos".
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeDriveModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl">Cancelar</button>
+                <button onclick="fetchGoogleDriveFile()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                    <span>Procesar Archivo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER CALCULADORA UB -->
+    <div id="cartDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl border-l border-slate-200 dark:border-slate-700 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Calculadora UB</h3>
+            </div>
+            <button onclick="toggleCartDrawer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div id="cartItemsList" class="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-slate-100 dark:divide-slate-700/60">
+        </div>
+
+        <div class="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/80 space-y-3">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-500">Valor de 1 UB (AR$):</span>
+                <input type="number" id="ubPriceInput" value="150" onchange="updateCartTotal()" class="w-24 px-2 py-1 text-right bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-semibold">
+            </div>
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-base">
+                <span>Total UB Acumuladas:</span>
+                <span id="totalUBVal" class="text-brand-600 dark:text-brand-400">0.00 UB</span>
+            </div>
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-lg border-t border-slate-200 dark:border-slate-700 pt-2">
+                <span>Estimado ($ ARS):</span>
+                <span id="totalARSVal" class="text-emerald-600 dark:text-emerald-400">$ 0.00</span>
+            </div>
+            <div class="pt-2 flex gap-2">
+                <button onclick="clearCart()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-xl hover:bg-slate-300 transition">
+                    Vaciar Lista
+                </button>
+                <button onclick="copyCartSummary()" class="w-1/2 py-2.5 bg-brand-600 text-white font-semibold text-xs rounded-xl hover:bg-brand-700 transition flex items-center justify-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    Copiar Resumen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMPORTAR ARCHIVOS -->
+    <div id="importModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 dark:border-slate-700 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                Importar Base de Datos NBU (JSON / CSV)
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Importa <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-brand-600 dark:text-brand-400 font-bold">nbu_dataset.json</code> generado con el script Python o un JSON/CSV propio. Para evitar errores de columnas, el PDF se procesa primero fuera del navegador.
+            </p>
+
+            <div id="importFormControls" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Seleccionar archivo local (.json, .csv; el PDF requiere el script Python)</label>
+                    <input type="file" id="fileImportInput" accept=".json,.csv,.pdf" onchange="handleFileUpload(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer border border-slate-200 dark:border-slate-700 rounded-xl">
+                </div>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                    <span class="flex-shrink mx-2 text-xs text-slate-400">o pegar JSON</span>
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                </div>
+
+                <textarea id="jsonPasteInput" rows="2" placeholder='[{"codigo":"660101","determinacion":"HEMOGRAMA COMPLETO","abreviatura":"HEM","ub":10.5,"urgencia":"Guardia","pmo":true}]' class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono outline-none"></textarea>
+            </div>
+
+            <!-- CONTENEDOR DE BARRA DE PROGRESO DE LECTURA DE PDF -->
+            <div id="importProgressContainer" class="hidden space-y-3 p-4 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span id="importProgressStatus" class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-brand-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="importProgressText">Iniciando lectura del PDF...</span>
+                    </span>
+                    <span id="importProgressPercent" class="text-brand-600 dark:text-brand-400 font-mono font-bold text-sm">0%</span>
+                </div>
+                
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
+                    <div id="importProgressBar" class="bg-brand-600 h-full rounded-full transition-all duration-200 w-0"></div>
+                </div>
+                
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono flex justify-between items-center pt-1">
+                    <span id="importPagesText">Procesando páginas...</span>
+                    <span id="importItemsCount" class="font-bold text-brand-600 dark:text-brand-400">0 determinaciones halladas</span>
+                </div>
+            </div>
+
+            <!-- RESUMEN DE CARGA COMPLETA -->
+            <div id="importSuccessSummary" class="hidden p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-3">
+                <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-sm">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span>¡Base de Datos NBU Cargada Exitosamente!</span>
+                </div>
+                <div id="importStatsGrid" class="grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <div class="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold">Total Prácticas</span>
+                        <span id="statTotal" class="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-300">0</span>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold">Inscritas PMO</span>
+                        <span id="statPMO" class="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-300">0</span>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold">Prácticas Esp.</span>
+                        <span id="statEspecial" class="font-mono font-bold text-sm text-purple-600 dark:text-purple-400">0</span>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold">En desuso (*)</span>
+                        <span id="statDesuso" class="font-mono font-bold text-sm text-red-600 dark:text-red-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeImportModal()" id="btnCancelImport" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl">Cerrar</button>
+                <button onclick="processPasteImport()" id="btnProcessPaste" class="px-4 py-2 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700">Cargar JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2">
+        <span id="toastMsg">Notificación</span>
+    </div>
+
+    <script>
+        /* Base de Datos NBU / CUBRA con referencias N y asterisco (*) */
+        const INITIAL_NBU_DATA = [
+            {
+                codigo: "660101",
+                determinacion: "HEMOGRAMA COMPLETO",
+                abreviatura: "HEM",
+                synonyms: ["Citológico completo", "Recuento globular", "Fórmula leucocitaria", "Serie roja y blanca"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Comprende recuento de eritrocitos, hematocrito, hemoglobina, índices hematimétricos (VCM, HCM, CHCM), recuento de leucocitos y fórmula leucocitaria relativa y absoluta. Muestra de sangre entera con EDTA.",
+                ub: 10.50
+            },
+            {
+                codigo: "660205",
+                determinacion: "GLUCEMIA (GLUCOSA EN SANGRE)",
+                abreviatura: "GLU",
+                synonyms: ["Glucemia en ayunas", "Glucosa plasmática", "Glicemia"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Medición de glucosa en plasma o suero. Ayuno mínimo recomendado de 8 horas. Método enzimático automatizado (Glucosa Oxidasa / Hexoquinasa).",
+                ub: 4.50
+            },
+            {
+                codigo: "660410",
+                determinacion: "UREMIA (UREA EN SANGRE)",
+                abreviatura: "URE",
+                synonyms: ["Urea plasmática", "Nitrógeno ureico", "BUN"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Determinación de nitrógeno ureico/urea en suero o plasma. Evaluación de la función renal.",
+                ub: 4.50
+            },
+            {
+                codigo: "660180",
+                determinacion: "CREATININEMIA",
+                abreviatura: "CREA",
+                synonyms: ["Creatinina en sangre", "Función renal creatinina"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Método cinético de Jaffé o enzimático. Utilizado para estimar la Tasa de Filtrado Glomerular (eTFG).",
+                ub: 5.00
+            },
+            {
+                codigo: "660350",
+                determinacion: "HEPATOGRAMA COMPLETO",
+                abreviatura: "HEP",
+                synonyms: ["Perfil hepático", "Perfil de función hepática", "TGO TGP Bilirrubinas FAL"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Incluye: Transaminasas (GOT/AST, GPT/ALT), Fosfatasa Alcalina (FAL), Bilirrubina Total, Directa e Indirecta. Muestra de suero libre de hemólisis.",
+                ub: 22.00
+            },
+            {
+                codigo: "660500",
+                determinacion: "IONOGRAMA PLASMÁTICO (Na, K, Cl)",
+                abreviatura: "IONO",
+                synonyms: ["Electrolitos en sangre", "Sodio Potasio Cloro", "Ionograma sérico"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Determinación por Electrodo de Ion Selectivo (ISE). Muestra: Suero o plasma con heparina de litio.",
+                ub: 14.00
+            },
+            {
+                codigo: "660812",
+                determinacion: "HORMONA TIROESTIMULANTE (TSH)",
+                abreviatura: "TSH",
+                synonyms: ["Tirotrofina", "Perfil tiroideo TSH", "TSH ultrasensible"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Inmunoensayo quimioluminiscente (CLIA/ECLIA) ultrasensible de 3ra generación. Norma Mínima N: Control con calibradores internacionales OMS.",
+                ub: 18.50
+            },
+            {
+                codigo: "660815",
+                determinacion: "TIROXINA LIBRE (T4 LIBRE)",
+                abreviatura: "T4L",
+                synonyms: ["T4L", "Free T4", "Tiroxina no ligada"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Valoración de la fracción no unida a proteínas de tiroxina. Evaluación tiroidea primaria.",
+                ub: 18.50
+            },
+            {
+                codigo: "660230",
+                determinacion: "HEMOGLOBINA GLICADA A1C (HbA1c)",
+                abreviatura: "HBA1C",
+                synonyms: ["Hemoglobina A1c", "HbA1c por HPLC", "Control glucémico diabetes"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Método estandarizado NGSP / IFCC (Cromatografía HPLC o Inmunoturbidimetría). Muestra de sangre entera con EDTA.",
+                ub: 16.00
+            },
+            {
+                codigo: "660142",
+                determinacion: "ERITROSEDIMENTACIÓN (VSG)",
+                abreviatura: "VSG",
+                synonyms: ["Velocidad de sedimentación globular", "Eritro", "Sedimentación roja"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Método de Westergren o automatizado equivalente. Lectura a los 60 minutos.",
+                ub: 3.50
+            },
+            {
+                codigo: "660990",
+                determinacion: "PRUEBA DE TIMOL (REACCIÓN DE TIMOL)",
+                abreviatura: "TIMOL",
+                synonyms: ["Turbidez de Timol", "Prueba de labilidad coloidal"],
+                urgencia: "Ambulatorio",
+                pmo: false,
+                especial: false,
+                en_desuso: true, // Asterisco (*)
+                normativa: "Prueba histórica de labilidad proteica. En desuso por baja especificidad frente a transaminasas y electroforesis de proteínas.",
+                ub: 2.50
+            },
+            {
+                codigo: "660720",
+                determinacion: "SEROLOGÍA PARA CHAGAS (HAI / ELISA)",
+                abreviatura: "CHAGAS",
+                synonyms: ["Trypanosoma cruzi", "Chagas ELISA", "HAI Chagas", "Inmunofluorescencia Chagas"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Norma Técnica Nacional: Se requiere la realización de al menos dos pruebas con principios antigénicos distintos (ej. ELISA + HAI) para diagnóstico definitivo.",
+                ub: 15.00
+            },
+            {
+                codigo: "660755",
+                determinacion: "HIV 1/2 ANTÍGENO Y ANTICUERPOS (4ta GENERACIÓN)",
+                abreviatura: "HIV",
+                synonyms: ["VIH", "SIDA serología", "Combo Ag p24 + Ac HIV"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Detección combinada de antígeno p24 y anticuerpos anti-HIV 1 y 2. Consentimiento informado según ley nacional de SIDA.",
+                ub: 20.00
+            },
+            {
+                codigo: "660010",
+                determinacion: "ORINA COMPLETA (EXAMEN FÍSICO-QUÍMICO Y SEDIMENTO)",
+                abreviatura: "ORI",
+                synonyms: ["Análisis de orina", "Urocitograma", "Sedimento urinario"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Comprende: Examen macroscópico, densidad, pH, tiras reactivas químicas y observación microscópica del sedimento centrifugado a 2000 rpm.",
+                ub: 6.00
+            },
+            {
+                codigo: "660601",
+                determinacion: "CULTIVO DE ORINA CON RECUENTO DE COLONIAS Y ANTIBIOGRAMA",
+                abreviatura: "UROC",
+                synonyms: ["Urocultivo", "Urocultivo con antibiograma", "Bacteriología urinaria"],
+                urgencia: "Ambulatorio",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Chorro medio de primera orina de la mañana o 4h de retención previa. Si el recuento es >= 10^5 UFC/ml se procede a identificación y antibiograma.",
+                ub: 22.50
+            },
+            {
+                codigo: "660488",
+                determinacion: "TROPONINA T / I ULTRASENSIBLE",
+                abreviatura: "TROP",
+                synonyms: ["Troponina cardiaca", "Marcador de infarto", "cTnT / cTnI"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Marcador de necrosis miocárdica de elección. Procesamiento inmediato de urgencia 24h.",
+                ub: 25.00
+            },
+            {
+                codigo: "660921",
+                determinacion: "DÍMERO D (CUANTITATIVO)",
+                abreviatura: "DIMD",
+                synonyms: ["Dímero D plasmático", "Productos de degradación de la fibrina", "PDF"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: true,
+                en_desuso: false,
+                normativa: "Determinación por inmunoturbidimetría automatizada. Evaluación de riesgo de tromboembolismo venoso.",
+                ub: 24.00
+            },
+            {
+                codigo: "660890",
+                determinacion: "SUBUNIDAD BETA HCG CUANTITATIVA",
+                abreviatura: "BHCG",
+                synonyms: ["Gonadotrofina coriónica humana", "Beta cuantitativa", "Test de embarazo cuantitativo"],
+                urgencia: "Guardia",
+                pmo: true,
+                especial: false,
+                en_desuso: false,
+                normativa: "Cuantificación seriada para seguimiento de embarazo temprano o sospecha de embarazo ectópico.",
+                ub: 16.00
+            },
+            {
+                codigo: "660105",
+                determinacion: "RECUENTO DE RETICULOCITOS (MÉTODO HISTÓRICO MANUAL)",
+                abreviatura: "RETIC-M",
+                synonyms: ["Reticulocitos azul de cresilo"],
+                urgencia: "Ambulatorio",
+                pmo: false,
+                especial: false,
+                en_desuso: true, // Asterisco (*)
+                normativa: "Conteo manual en frotis con coloración vital. Reemplazado por citometría de flujo en hemogramas automatizados modernos.",
+                ub: 4.00
+            }
+        ];
+
+        /* Estado Global */
+        let nbuData = [...INITIAL_NBU_DATA];
+        let filteredData = [...nbuData];
+        let cart = [];
+        let activeFilters = {
+            pmo: false,
+            especial: false,
+            normativa: false,
+            state: 'all'
+        };
+
+        window.onload = function() {
+            performSearch();
+            setupSearchInputListeners();
+            updateCartUI();
+            // Intenta cargar automáticamente el dataset que esté junto a index.html.
+            // Esto funciona cuando la app se sirve por HTTP/HTTPS (por ejemplo localhost).
+            autoLoadSiblingDataset();
+        };
+
+        async function autoLoadSiblingDataset() {
+            try {
+                const response = await fetch('./nbu_dataset.json', { cache: 'no-store' });
+                if (!response.ok) throw new Error('No se encontró nbu_dataset.json');
+                const parsed = await response.json();
+                const imported = normalizeImportedDataset(parsed);
+                if (!imported || imported.length === 0) {
+                    throw new Error('nbu_dataset.json no contiene prácticas compatibles');
+                }
+                nbuData = imported;
+                performSearch();
+                updateCartUI();
+                showToast(`Dataset cargado automáticamente: ${nbuData.length} prácticas`);
+            } catch (err) {
+                // Al abrir index.html directamente con file://, los navegadores bloquean
+                // normalmente fetch de archivos vecinos por seguridad. En ese caso la app
+                // sigue funcionando con los datos integrados y permite importación manual.
+                console.info('Autocarga de nbu_dataset.json no disponible:', err.message);
+            }
+        }
+
+        function normalizeText(str) {
+            if (!str) return '';
+            return str.toString()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // UB puede ser null cuando el PDF no aporta un valor legible.
+        // Se muestra como "s/d" y nunca debe bloquear la importación.
+        function formatUB(value) {
+            const n = Number(value);
+            return value !== null && value !== '' && Number.isFinite(n) ? `${n.toFixed(2)} UB` : 's/d';
+        }
+
+        function numericUB(value) {
+            const n = Number(value);
+            return value !== null && value !== '' && Number.isFinite(n) ? n : 0;
+        }
+
+        function performSearch() {
+            const query = normalizeText(document.getElementById('searchInput').value.trim());
+
+            filteredData = nbuData.filter(item => {
+                let matchesText = true;
+                if (query.length > 0) {
+                    const matchCode = normalizeText(item.codigo).includes(query);
+                    const matchDet = normalizeText(item.determinacion).includes(query);
+                    const matchAbbrev = normalizeText(item.abreviatura).includes(query);
+                    const matchSyn = item.synonyms && item.synonyms.some(s => normalizeText(s).includes(query));
+
+                    matchesText = matchCode || matchDet || matchAbbrev || matchSyn;
+                }
+
+                if (activeFilters.pmo && !item.pmo) return false;
+                if (activeFilters.especial && !item.especial) return false;
+                if (activeFilters.normativa && (!item.normativa || item.normativa.length < 5)) return false;
+
+                if (activeFilters.state === 'active' && item.en_desuso) return false;
+                if (activeFilters.state === 'deprecated' && !item.en_desuso) return false;
+
+                return matchesText;
+            });
+
+            renderTable();
+        }
+
+        function setupSearchInputListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const btnClear = document.getElementById('btnClearSearch');
+
+            searchInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 0) {
+                    btnClear.classList.remove('hidden');
+                } else {
+                    btnClear.classList.add('hidden');
+                }
+
+                if (document.getElementById('liveSearchToggle').checked) {
+                    performSearch();
+                }
+            });
+        }
+
+        function handleSearchSubmit(e) {
+            e.preventDefault();
+            performSearch();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('btnClearSearch').classList.add('hidden');
+            performSearch();
+        }
+
+        function handleLiveToggle() {
+            if (document.getElementById('liveSearchToggle').checked) {
+                performSearch();
+            }
+        }
+
+        function toggleFilter(filterKey) {
+            activeFilters[filterKey] = !activeFilters[filterKey];
+
+            const idMap = {
+                'pmo': { btn: 'filterPMO', ind: 'indicatorPMO' },
+                'especial': { btn: 'filterEspeciales', ind: 'indicatorEspecial' },
+                'normativa': { btn: 'filterNormativa', ind: 'indicatorNormativa' }
+            };
+
+            const elem = idMap[filterKey];
+            const btn = document.getElementById(elem.btn);
+            const ind = document.getElementById(elem.ind);
+
+            if (activeFilters[filterKey]) {
+                btn.classList.add('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/30', 'text-brand-700', 'dark:text-brand-300');
+                ind.classList.remove('bg-slate-400');
+                ind.classList.add('bg-brand-600');
+            } else {
+                btn.classList.remove('border-brand-500', 'bg-brand-50', 'dark:bg-brand-900/30', 'text-brand-700', 'dark:text-brand-300');
+                ind.classList.remove('bg-brand-600');
+                ind.classList.add('bg-slate-400');
+            }
+
+            performSearch();
+        }
+
+        function applyFilters() {
+            activeFilters.state = document.getElementById('filterState').value;
+            performSearch();
+        }
+
+        function resetAllFilters() {
+            activeFilters = { pmo: false, especial: false, normativa: false, state: 'all' };
+            document.getElementById('filterState').value = 'all';
+
+            ['pmo', 'especial', 'normativa'].forEach(k => {
+                const elem = { pmo: 'filterPMO', especial: 'filterEspeciales', normativa: 'filterNormativa' }[k];
+                const ind = { pmo: 'indicatorPMO', especial: 'indicatorEspecial', normativa: 'indicatorNormativa' }[k];
+                document.getElementById(elem).className = "px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition flex items-center gap-1.5";
+                document.getElementById(ind).className = "w-2 h-2 rounded-full bg-slate-400";
+            });
+
+            document.getElementById('searchInput').value = '';
+            document.getElementById('btnClearSearch').classList.add('hidden');
+            performSearch();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('resultsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const resultsCount = document.getElementById('resultsCount');
+
+            tbody.innerHTML = '';
+            resultsCount.textContent = `Mostrando ${filteredData.length} de ${nbuData.length} prácticas del NBU`;
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition group ${item.en_desuso ? 'opacity-75 bg-red-50/20 dark:bg-red-950/10' : ''}`;
+
+                const synonymsHtml = item.synonyms && item.synonyms.length > 0 
+                    ? `<div class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-md">Sinónimos: ${item.synonyms.join(', ')}</div>` 
+                    : '';
+
+                let badges = '';
+                if (item.pmo) {
+                    badges += `<span class="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded">PMO</span> `;
+                }
+                if (item.especial) {
+                    badges += `<span class="px-1.5 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 rounded">ESP</span> `;
+                }
+
+                let refBadge = '-';
+                if (item.en_desuso) {
+                    refBadge = `<span class="badge-asterisk px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer" onclick="openDetailModal('${item.codigo}')" title="En Desuso (* Asterisco)">
+                        <span class="text-sm font-extrabold">*</span>
+                        <span>Desuso</span>
+                    </span>`;
+                } else if (item.normativa) {
+                    refBadge = `<button onclick="openDetailModal('${item.codigo}')" class="badge-normative px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1 hover:scale-105 transition shadow-sm" title="Norma Mínima / Interpretación N">
+                        <span class="text-xs font-extrabold">N</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>`;
+                }
+
+                const urgenciaBadge = item.urgencia === "Guardia" || item.urgencia === "Sí"
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">Guardia</span>`
+                    : `<span class="text-slate-400 text-xs">Ambulatorio</span>`;
+
+                const isInCart = cart.some(c => c.codigo === item.codigo);
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 sm:px-6 font-mono font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        ${item.codigo}
+                    </td>
+                    <td class="py-3.5 px-4 sm:px-6">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-900 dark:text-white cursor-pointer hover:text-brand-600 transition" onclick="openDetailModal('${item.codigo}')">${item.determinacion}</span>
+                            <span class="text-xs font-mono font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-1.5 py-0.5 rounded">(${item.abreviatura})</span>
+                            ${badges}
+                        </div>
+                        ${synonymsHtml}
+                    </td>
+                    <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                        ${urgenciaBadge}
+                    </td>
+                    <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                        ${refBadge}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-bold text-brand-700 dark:text-brand-300 font-mono text-base whitespace-nowrap">
+                        ${formatUB(item.ub)}
+                    </td>
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openDetailModal('${item.codigo}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition" title="Ver Ficha Completa">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button onclick="toggleAddToCart('${item.codigo}')" class="p-1.5 ${isInCart ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700'} rounded-lg transition" title="${isInCart ? 'Quitar de la Calculadora' : 'Agregar a Calculadora UB'}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isInCart ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4'}"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openDetailModal(code) {
+            const item = nbuData.find(d => d.codigo === code);
+            if (!item) return;
+
+            document.getElementById('modalCode').textContent = item.codigo;
+            document.getElementById('modalTitle').textContent = item.determinacion;
+            document.getElementById('modalAbbreviation').textContent = item.abreviatura || '-';
+            document.getElementById('modalUB').textContent = `${formatUB(item.ub)}`;
+            document.getElementById('modalUrgencia').textContent = item.urgencia;
+            document.getElementById('modalPMO').textContent = item.pmo ? "Sí (Inscrito)" : "No inscrito";
+
+            const modalBadges = document.getElementById('modalBadges');
+            modalBadges.innerHTML = '';
+            if (item.pmo) modalBadges.innerHTML += `<span class="px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded">PMO</span>`;
+            if (item.especial) modalBadges.innerHTML += `<span class="px-2 py-0.5 text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 rounded">Práctica Especial</span>`;
+
+            const synonymsContainer = document.getElementById('modalSynonyms');
+            if (item.synonyms && item.synonyms.length > 0) {
+                synonymsContainer.innerHTML = item.synonyms.map(s => `<span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-md font-medium">${s}</span>`).join('');
+            } else {
+                synonymsContainer.innerHTML = `<span class="text-slate-400 italic">Sin sinónimos registrados</span>`;
+            }
+
+            const normBox = document.getElementById('modalNormativeBox');
+            if (item.normativa) {
+                normBox.classList.remove('hidden');
+                document.getElementById('modalNormativeText').textContent = item.normativa;
+            } else {
+                normBox.classList.add('hidden');
+            }
+
+            const desusoBox = document.getElementById('modalDesusoBox');
+            if (item.en_desuso) {
+                desusoBox.classList.remove('hidden');
+            } else {
+                desusoBox.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modalContainer').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modalContainer').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function openDriveModal() {
+            document.getElementById('driveModal').classList.remove('hidden');
+        }
+
+        function closeDriveModal() {
+            document.getElementById('driveModal').classList.add('hidden');
+        }
+
+        function extractGoogleDriveFileId(urlOrId) {
+            if (!urlOrId) return '';
+            if (urlOrId.length === 33) return urlOrId;
+            const match = urlOrId.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
+            if (match && match[1]) return match[1];
+            return urlOrId.trim();
+        }
+
+        // Admite el formato legado (array) y el formato maestro { metadata, practicas, anexos }.
+        function normalizeImportedDataset(parsed) {
+            const rows = Array.isArray(parsed) ? parsed
+                : (parsed && Array.isArray(parsed.practicas) ? parsed.practicas
+                : (parsed && Array.isArray(parsed.data) ? parsed.data : null));
+            if (!rows) return null;
+            return rows.filter(item => item && item.codigo != null && item.determinacion != null).map(item => ({
+                ...item,
+                codigo: String(item.codigo).trim(),
+                determinacion: String(item.determinacion).trim(),
+                abreviatura: item.abreviatura == null ? '' : String(item.abreviatura),
+                synonyms: Array.isArray(item.synonyms) ? item.synonyms : [],
+                urgencia: item.urgencia == null ? (item.urgencia_marcada_en_fuente ? 'Guardia' : 'Ambulatorio') : item.urgencia,
+                pmo: Boolean(item.pmo),
+                especial: Boolean(item.especial),
+                en_desuso: Boolean(item.en_desuso),
+                normativa: item.normativa == null ? '' : String(item.normativa),
+                ub: item.ub == null || item.ub === '' || !Number.isFinite(Number(item.ub)) ? null : Number(item.ub)
+            }));
+        }
+
+        async function fetchGoogleDriveFile() {
+            const rawVal = document.getElementById('driveUrlInput').value.trim();
+            const fileId = extractGoogleDriveFileId(rawVal);
+
+            if (!fileId) {
+                showToast("Por favor ingresa una URL válida de Google Drive");
+                return;
+            }
+
+            showToast(`Iniciando conexión con Google Drive (ID: ${fileId})...`);
+
+            const downloadUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
+
+            try {
+                const response = await fetch(downloadUrl);
+                if (!response.ok) throw new Error("CORS o archivo no público");
+
+                const blob = await response.blob();
+                if (blob.type.includes("pdf") || rawVal.includes("pdf")) {
+                    await parsePDFBlob(blob);
+                } else {
+                    const text = await blob.text();
+                    try {
+                        const parsed = JSON.parse(text);
+                        const imported = normalizeImportedDataset(parsed);
+                        if (imported && imported.length) {
+                            nbuData = imported;
+                            performSearch();
+                            closeDriveModal();
+                            showToast(`Base cargada desde Drive: ${nbuData.length} ítems`);
+                        } else {
+                            showToast('El JSON no contiene un array de prácticas compatible.');
+                        }
+                    } catch (e) {
+                        parseCSVData(text);
+                    }
+                }
+            } catch (err) {
+                showToast("Acceso directo restringido por Drive. Descarga el archivo e impórtalo en 'Cargar Datos'");
+            }
+        }
+
+        async function parsePDFBlob(blob) {
+            const progressContainer = document.getElementById('importProgressContainer');
+            const progressStatus = document.getElementById('importProgressText');
+            const progressPages = document.getElementById('importPagesText');
+            const progressItems = document.getElementById('importItemsCount');
+            const formControls = document.getElementById('importFormControls');
+            progressContainer.classList.remove('hidden');
+            progressStatus.textContent = 'El PDF requiere extracción previa para conservar correctamente columnas, UB, urgencias y normas.';
+            progressPages.textContent = 'Ejecuta extraer_cubra.py sobre cubra.pdf';
+            progressItems.textContent = 'Después importa nbu_dataset.json o nbu_master.json';
+            document.getElementById('importProgressPercent').textContent = '—';
+            document.getElementById('importProgressBar').style.width = '0%';
+            formControls.classList.remove('opacity-50', 'pointer-events-none');
+            showToast('Para evitar datos inventados o columnas mezcladas, procesa el PDF con el script Python e importa el JSON resultante.');
+        }
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.name.endsWith('.pdf')) {
+                parsePDFBlob(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const content = evt.target.result;
+                    if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(content);
+                        const imported = normalizeImportedDataset(parsed);
+                        if (imported && imported.length) {
+                            nbuData = imported;
+                            performSearch();
+                            closeImportModal();
+                            showToast(`Base cargada: ${nbuData.length} registros`);
+                        } else {
+                            showToast('El JSON no contiene prácticas compatibles. Usa nbu_dataset.json o nbu_master.json.');
+                        }
+                    } else if (file.name.endsWith('.csv')) {
+                        parseCSVData(content);
+                    }
+                } catch (err) {
+                    showToast("Error al leer el archivo. Formato inválido.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processPasteImport() {
+            const text = document.getElementById('jsonPasteInput').value.trim();
+            if (!text) return;
+
+            try {
+                const parsed = JSON.parse(text);
+                const imported = normalizeImportedDataset(parsed);
+                if (imported && imported.length) {
+                    nbuData = imported;
+                    performSearch();
+                    closeImportModal();
+                    showToast(`Datos actualizados: ${nbuData.length} prácticas`);
+                } else {
+                    showToast('El JSON no contiene prácticas compatibles.');
+                }
+            } catch (e) {
+                showToast("Formato JSON no válido");
+            }
+        }
+
+        function parseCSVData(csvText) {
+            const lines = csvText.split('\n');
+            const items = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const parts = line.split(',');
+                if (parts.length >= 4) {
+                    items.push({
+                        codigo: parts[0].replace(/"/g, '').trim(),
+                        determinacion: parts[1].replace(/"/g, '').trim(),
+                        abreviatura: parts[2].replace(/"/g, '').trim(),
+                        ub: parseFloat(parts[3]) || 0,
+                        urgencia: parts[4] ? parts[4].trim() : "Ambulatorio",
+                        synonyms: [],
+                        pmo: true,
+                        especial: false,
+                        en_desuso: false,
+                        normativa: ""
+                    });
+                }
+            }
+
+            if (items.length > 0) {
+                nbuData = items;
+                performSearch();
+                closeImportModal();
+                showToast(`CSV importado: ${items.length} prácticas`);
+            }
+        }
+
+        function toggleAddToCart(code) {
+            const item = nbuData.find(d => d.codigo === code);
+            if (!item) return;
+
+            const index = cart.findIndex(c => c.codigo === code);
+            if (index > -1) {
+                cart.splice(index, 1);
+                showToast(`Quitado: ${item.abreviatura}`);
+            } else {
+                cart.push(item);
+                showToast(`Agregado a la calculadora: ${item.determinacion}`);
+            }
+
+            updateCartUI();
+            renderTable();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCountBadge').textContent = cart.length;
+            const container = document.getElementById('cartItemsList');
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 text-xs">
+                        No has seleccionado prácticas.<br>Haz clic en el botón + para agregar ítems al presupuesto.
+                    </div>
+                `;
+            } else {
+                container.innerHTML = cart.map(item => `
+                    <div class="pt-3 first:pt-0 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="font-semibold text-xs text-slate-800 dark:text-slate-100">${item.determinacion}</div>
+                            <div class="text-[11px] font-mono text-slate-400">${item.codigo} | ${formatUB(item.ub)}</div>
+                        </div>
+                        <button onclick="toggleAddToCart('${item.codigo}')" class="text-slate-400 hover:text-red-500 p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            updateCartTotal();
+        }
+
+        function updateCartTotal() {
+            const totalUB = cart.reduce((sum, item) => sum + numericUB(item.ub), 0);
+            const ubPrice = parseFloat(document.getElementById('ubPriceInput').value) || 0;
+            const totalARS = totalUB * ubPrice;
+
+            document.getElementById('totalUBVal').textContent = `${totalUB.toFixed(2)} UB`;
+            document.getElementById('totalARSVal').textContent = `$ ${totalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+            renderTable();
+            showToast("Calculadora vaciada");
+        }
+
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cartDrawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function copyCartSummary() {
+            if (cart.length === 0) {
+                showToast("La calculadora está vacía");
+                return;
+            }
+
+            const totalUB = cart.reduce((sum, item) => sum + numericUB(item.ub), 0);
+            const ubPrice = parseFloat(document.getElementById('ubPriceInput').value) || 0;
+            const totalARS = totalUB * ubPrice;
+
+            let text = `COTIZACIÓN NBU - CUBRA ARGENTINA\n------------------------------------\n`;
+            cart.forEach(item => {
+                text += `• [${item.codigo}] ${item.determinacion} (${item.abreviatura}) - ${formatUB(item.ub)}\n`;
+            });
+            text += `------------------------------------\n`;
+            text += `TOTAL UB: ${totalUB.toFixed(2)} UB\n`;
+            text += `VALOR 1 UB: $${ubPrice.toFixed(2)}\n`;
+            text += `ESTIMADO TOTAL: $${totalARS.toFixed(2)} ARS\n`;
+
+            copyToClipboard(text);
+            showToast("Resumen copiado al portapapeles");
+        }
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

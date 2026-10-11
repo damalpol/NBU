@@ -1276,7 +1276,7 @@
             drawer.classList.toggle('translate-x-full');
         }
 
-        function copyCartSummary() {
+        async function copyCartSummary() {
             if (cart.length === 0) {
                 showToast("La calculadora está vacía");
                 return;
@@ -1293,19 +1293,47 @@
             text += `------------------------------------\n`;
             text += `TOTAL UB: ${totalUB.toFixed(2)} UB\n`;
             text += `VALOR 1 UB: $${ubPrice.toFixed(2)}\n`;
-            text += `ESTIMADO TOTAL: $${totalARS.toFixed(2)} ARS\n`;
+            text += `ESTIMADO TOTAL: $${totalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ARS\n`;
 
-            copyToClipboard(text);
-            showToast("Resumen copiado al portapapeles");
+            try {
+                await copyToClipboard(text);
+                showToast("Resumen copiado al portapapeles");
+            } catch (error) {
+                console.error('No se pudo copiar la cotización:', error);
+                showToast("No se pudo copiar automáticamente. Selecciona y copia el texto manualmente.");
+            }
         }
 
-        function copyToClipboard(text) {
+        async function copyToClipboard(text) {
+            // API moderna: funciona en contextos seguros (HTTPS o localhost) y conserva los saltos de línea.
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            // Alternativa para navegadores/contextos sin Clipboard API.
             const textarea = document.createElement('textarea');
             textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '-9999px';
+            textarea.style.opacity = '0';
             document.body.appendChild(textarea);
+            textarea.focus();
             textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+            textarea.setSelectionRange(0, textarea.value.length);
+
+            let copied = false;
+            try {
+                copied = document.execCommand('copy');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+
+            if (!copied) {
+                throw new Error('El navegador rechazó la operación de copia.');
+            }
         }
 
         function toggleDarkMode() {
